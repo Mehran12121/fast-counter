@@ -1,0 +1,5 @@
+@SQ SN:chr1 LN:10000
+read1 0 chr1 950 255 * * 0 0 ATGC *
+read2 0 chr1 1200 255 * * 0 0 ATGC *
+read3 0 chr1 4500 255 * * 0 0 ATGC *
+read4 0 chr1 7000 255 * * 0 0 ATGC *

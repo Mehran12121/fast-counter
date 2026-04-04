@@ -1,0 +1,2 @@
+chr1    source    gene    900    2000    .    +    .    gene_id "GeneA";
+chr1    source    gene    4000    6000    .    +    .    gene_id "GeneB";

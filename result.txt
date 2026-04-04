@@ -1,0 +1,3 @@
+gene_id	count
+GeneA	1
+GeneB	1
