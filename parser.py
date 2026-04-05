@@ -1,20 +1,19 @@
 def parse_gtf(gtf_file):
     genes = {}
 
-    with open(gtf_file, 'r') as file:
+    with open(gtf_file) as file:
         for line in file:
             if line.startswith('#'):
                 continue
 
-            parts = line.strip().split()
-
-            if len(parts) < 5:
+            parts = line.strip().split("\t")
+            if len(parts) < 9:
                 continue
 
             chrom = parts[0]
+            feature = parts[2]
 
-            # check if this line represents a gene
-            if "gene" not in line.lower():
+            if feature != "exon":
                 continue
 
             try:
@@ -23,22 +22,48 @@ def parse_gtf(gtf_file):
             except:
                 continue
 
-            # extract gene_id from full line
+            attributes = parts[8]
+
             gene_id = None
-            if 'gene_id' in line:
-                try:
-                    gene_id = line.split('gene_id')[1].split(';')[0].strip()
-                    gene_id = gene_id.replace('"', '').replace("'", "")
-                except:
-                    continue
+            for attr in attributes.split(";"):
+                attr = attr.strip()
+                if attr.startswith("gene_id"):
+                    try:
+                        gene_id = attr.split('"')[1]
+                    except:
+                        pass
+                    break
 
             if gene_id is None:
                 continue
 
             if chrom not in genes:
-                genes[chrom] = []
+                genes[chrom] = {}
 
-            genes[chrom].append((start, end, gene_id))
+            if gene_id not in genes[chrom]:
+                genes[chrom][gene_id] = []
+
+            genes[chrom][gene_id].append((start, end))
+
+    # merge exons
+    def merge_intervals(intervals):
+        intervals.sort()
+        merged = [intervals[0]]
+
+        for curr in intervals[1:]:
+            prev_start, prev_end = merged[-1]
+            curr_start, curr_end = curr
+
+            if curr_start <= prev_end:
+                merged[-1] = (prev_start, max(prev_end, curr_end))
+            else:
+                merged.append(curr)
+
+        return merged
+
+    for chrom in genes:
+        for gene_id in genes[chrom]:
+            genes[chrom][gene_id] = merge_intervals(genes[chrom][gene_id])
 
     return genes
 
@@ -46,22 +71,60 @@ def parse_gtf(gtf_file):
 def parse_sam(sam_file):
     reads = []
 
-    with open(sam_file, 'r') as file:
+    with open(sam_file) as file:
         for line in file:
             if line.startswith('@'):
                 continue
 
             parts = line.strip().split()
 
-            if len(parts) < 4:
+            if len(parts) < 6:
                 continue
 
             chrom = parts[2]
-            pos = int(parts[3])
 
             if chrom == '*':
                 continue
 
-            reads.append((chrom, pos))
+            try:
+                pos = int(parts[3])
+            except:
+                continue
+
+            cigar = parts[5]
+
+            if cigar == '*':
+                continue
+
+            segments = []
+            current_pos = pos
+            num = ""
+
+            for char in cigar:
+                if char.isdigit():
+                    num += char
+                else:
+                    if num == "":
+                        continue
+
+                    length = int(num)
+
+                    if char == 'M':
+                        start = current_pos
+                        end = current_pos + length - 1
+                        segments.append((start, end))
+                        current_pos += length
+
+                    elif char == 'N':
+                        # skip intron
+                        current_pos += length
+
+                    elif char in ['D', 'I', 'S', 'H']:
+                        current_pos += length
+
+                    num = ""
+
+            if segments:
+                reads.append((chrom, segments))
 
     return reads

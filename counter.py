@@ -1,36 +1,31 @@
-import bisect
+def overlaps(a_start, a_end, b_start, b_end):
+    return a_start <= b_end and b_start <= a_end
+
 
 def count_reads(reads, genes):
     counts = {}
 
-    gene_starts = {}
-    gene_data = {}
-
-    # prepare sorted data
+    # initialize
     for chrom in genes:
-        sorted_genes = sorted(genes[chrom], key=lambda x: x[0])
-
-        gene_starts[chrom] = [g[0] for g in sorted_genes]
-        gene_data[chrom] = sorted_genes
-
-        for _, _, gene_id in sorted_genes:
+        for gene_id in genes[chrom]:
             counts[gene_id] = 0
 
-    # binary search counting
-    for chrom, pos in reads:
-        if chrom not in gene_data:
+    # count
+    for chrom, segments in reads:
+        if chrom not in genes:
             continue
 
-        starts = gene_starts[chrom]
-        genes_list = gene_data[chrom]
+        for gene_id, exons in genes[chrom].items():
+            counted = False
 
-        # find index using binary search
-        idx = bisect.bisect_right(starts, pos) - 1
+            for seg_start, seg_end in segments:
+                for exon_start, exon_end in exons:
+                    if overlaps(seg_start, seg_end, exon_start, exon_end):
+                        counts[gene_id] += 1
+                        counted = True
+                        break
 
-        if idx >= 0:
-            start, end, gene_id = genes_list[idx]
-
-            if start <= pos <= end:
-                counts[gene_id] += 1
+                if counted:
+                    break
 
     return counts

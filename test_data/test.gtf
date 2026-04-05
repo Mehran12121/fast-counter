@@ -1,2 +1,5 @@
-chr1    source    gene    900    2000    .    +    .    gene_id "GeneA";
-chr1    source    gene    4000    6000    .    +    .    gene_id "GeneB";
+chr1	test	exon	1000	1200	.	+	.	gene_id "GeneA";
+chr1	test	exon	1500	1700	.	+	.	gene_id "GeneA";
+
+chr1	test	exon	1100	1300	.	+	.	gene_id "GeneB";
+chr1	test	exon	2000	2200	.	+	.	gene_id "GeneB";
