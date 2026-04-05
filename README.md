@@ -1,139 +1,100 @@
-# ⚡ FastCounter: Lightweight RNA-seq Read Counting Tool
+# 🧬 FastCounter: A Lightweight RNA-seq Read Counter
 
-A fast and memory-efficient RNA-seq read counting tool designed for small to medium datasets.  
-FastCounter processes aligned reads (SAM format) and gene annotations (GTF format) to generate gene-level counts using an optimized binary search algorithm.
+FastCounter is a Python-based tool for counting sequencing reads mapped to genes using **exon-aware and splice-aware logic**.
 
----
-
-## 🧠 Motivation
-
-Existing tools like featureCounts are highly optimized but complex and resource-heavy.  
-FastCounter is built as a lightweight alternative to:
-
-- Understand core bioinformatics workflows  
-- Demonstrate algorithmic optimization  
-- Work efficiently on low-resource systems  
+This project implements core ideas behind tools like featureCounts and HTSeq in a simplified, educational, and extendable way.
 
 ---
 
-## ⚙️ Workflow
+## 🔥 Features
+
+- ✅ Exon-based read counting (introns ignored)
+- ✅ Merged exon intervals per gene
+- ✅ Splice-aware parsing (supports CIGAR `M` and `N`)
+- ✅ Works with SAM files from STAR, HISAT2, Bowtie, Bowtie2
+- ✅ Modular design (parser, counter, main)
+- ✅ Simple and easy to understand
 
 ---
 
-## 🚀 Features
+## 🧠 How It Works
 
-- ✅ Parses SAM (aligned reads) and GTF (gene annotations)
-- ⚡ Fast lookup using binary search (O(n log k))
-- 💻 Low memory usage
-- 🧩 Simple command-line interface
-- 🧪 Works on simulated and real-like datasets
+### 1. GTF Parsing
+- Extracts only `exon` features
+- Groups exons by `gene_id`
+- Merges overlapping exon intervals
+
+### 2. SAM Parsing
+- Reads alignment positions
+- Parses CIGAR strings
+- Converts reads into exon segments:
+  - `50M` → single segment
+  - `50M100N50M` → two exon segments (spliced read)
+
+### 3. Read Counting
+- Checks overlap between read segments and gene exons
+- Counts a read **once per gene**
+- Avoids double counting within the same gene
 
 ---
 
-## 📦 Installation
-
-Clone the repository:
+## 📂 Project Structure
 
 
-git clone https://github.com/Mehran12121/fast-counter.git
-cd fast-counterpython main.py <input.sam> <genes.gtf> <output.txt>
-python main.py example.sam example.gtf result.txt
-input format
-read1 0 chr1 1000 ...
-read2 0 chr1 5000 ...
-chr1 source gene 900 2000 . + . gene_id "GeneA";
-chr1 source gene 4000 6000 . + . gene_id "GeneB";
-gene_id    count
-GeneA      2
-GeneB      1
-⚡ Algorithm & Optimization
-🔹 Naive Approach
-Checks every gene for each read
-Time Complexity: O(n × k)
-🔹 FastCounter Approach
-Sorts gene intervals
-Uses binary search (bisect)
-Time Complexity: O(n log k)
+Fast-counter/
+│── main.py
+│── parser.py
+│── counter.py
+│── test_data/
+│ ├── test.gtf
+│ └── test.sam
+│── output.txt
 
-👉 This significantly improves performance for large datasets.
 
-🧪 Performance Benchmark
+---
 
-Tested on simulated dataset:
+## ▶️ Usage
 
-📊 Reads: 5,000
-🧬 Genes: 100
-⏱ Runtime: ~0.01–0.05 seconds
-🏗 Project Structure
-fast-counter/
-│
-├── main.py        # CLI entry point
-├── parser.py      # SAM & GTF parsing
-├── counter.py     # Counting logic (binary search)
-├── test_data/     # Sample data
-└── README.md
-🔬 Real-world Usage
+Run from terminal:
 
-FastCounter can be used after alignment tools such as:
-
-Bowtie2
-HISAT2
-
-Example pipeline:
-
-FASTQ → Bowtie2 → SAM → FastCounter → counts.txt
-🚧 Limitations
-No BAM support (SAM only)
-No multi-threading
-Simplified overlap logic
-Not strand-specific
+```bash
+python main.py test_data/test.sam test_data/test.gtf output.txt
+📊 Example Output
+gene_id	count
+GeneA	1
+GeneB	1
+🧪 Example Input
+GTF (exons)
+chr1	test	exon	1000	1200	.	+	.	gene_id "GeneA";
+chr1	test	exon	1500	1700	.	+	.	gene_id "GeneA";
+SAM (spliced read)
+50M100N50M
+⚠️ Current Limitations
+❌ No strand-specific counting
+❌ No paired-end support
+❌ Limited CIGAR handling (M, N only)
+❌ Not optimized for very large datasets
 🚀 Future Improvements
-BAM file support (pysam)
-Multi-threading for speed
-Strand-specific counting
-Advanced gene overlap handling
-Integration with full RNA-seq pipelines
+Add strand-specific mode
+Support paired-end reads
+Handle more CIGAR operations
+Optimize using interval trees
+Benchmark against featureCounts
+📚 Inspiration
+
+This project is inspired by widely used RNA-seq tools:
+
+featureCounts
+HTSeq
 👨‍💻 Author
 
 Mehran Khan
 Bioinformatics Student
 
 
-
-This project focuses on understanding core bioinformatics concepts and optimizing them using efficient algorithms.
-It is designed as a learning + demonstration tool rather than a production-grade alternative.
+This is a learning-oriented implementation aimed at understanding the core logic of RNA-seq read counting, not a replacement for production tools.
 
 
+---
 
-Input:
-- SAM file with aligned reads
-- GTF file with gene annotations
-
-Command:
-python main.py example.sam example.gtf output.txt
-
-Output:
-gene_id    count
-GeneA      2
-GeneB      1
-## Performance
-
-Tested on:
-- 5000 reads
-- 100 genes
-
-Runtime:
-~0.01 seconds
-
-Optimization:
-Binary search reduces complexity from O(n × k) → O(n log k)
-## Architecture
-
-- parser.py → parses SAM and GTF files
-- counter.py → counts reads using binary search
-- main.py → CLI interface
-- ## Future Improvements
-- BAM support
-- Multi-threading
-- Strand-specific counting
-- Integration with real RNA-seq pipelines
+#
